@@ -1,0 +1,8 @@
+data/raw/
+data/jobs.txt
+data/dl.done
+s.html
+a.html
+p.html
+.claude/
+__pycache__/
