@@ -39,13 +39,14 @@ main{max-width:1280px;margin:0 auto;padding:16px}
 .note{font-size:11.5px;color:var(--mute);line-height:1.5;margin-top:6px}
 table.t{width:100%;border-collapse:collapse;font-size:13px}table.t td,table.t th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:right}table.t td:first-child,table.t th:first-child{text-align:left}
 .bar{height:6px;border-radius:3px;background:var(--c2)}
-#map{width:100%;height:560px}#map path{stroke:#fff;stroke-width:.4;cursor:pointer}#map path:hover{stroke:#000;stroke-width:1.2}
+#map{width:100%;height:820px}#map path{stroke:#fff;stroke-width:.4;cursor:pointer}#map path:hover{stroke:#000;stroke-width:1.2}
 #tip{position:fixed;pointer-events:none;background:#111c;color:#fff;padding:6px 9px;border-radius:6px;font-size:12px;display:none;z-index:50;line-height:1.5}
 .ctl{display:grid;gap:12px}.ctl label{font-size:13px;display:block}.ctl .val{float:right;font-weight:700;color:var(--c2)}
 .heat td{padding:6px 4px;text-align:center;font-size:11px;min-width:42px}
 .res{font-size:30px;font-weight:700}
 .pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;background:var(--line);margin-right:4px}
 footer{max-width:1280px;margin:0 auto;padding:0 16px 40px;color:var(--mute);font-size:12px;line-height:1.6}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}.chips button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}.chips button.on{background:var(--c2);border-color:var(--c2);color:#fff;font-weight:600}
 select.inl{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit}
 </style>
 </head>
@@ -53,8 +54,8 @@ select.inl{background:var(--card);color:var(--ink);border:1px solid var(--line);
 <header>
  <div class="top">
   <h1>🇹🇭 Aging Society Dashboard · โครงสร้างประชากรและผลกระทบเชิงเศรษฐกิจ</h1>
-  <div class="fl rng"><span>ช่วงเวลา (พ.ศ.) <span class="v" id="yrLbl"></span></span>
-   <div class="dual"><input type="range" id="y0"><input type="range" id="y1"></div></div>
+  <div class="fl"><span>ปีเริ่มต้น (พ.ศ.)</span><select id="y0"></select></div>
+  <div class="fl"><span>ปีสิ้นสุด (พ.ศ.)</span><select id="y1"></select></div>
   <div class="fl"><span>ภูมิภาค</span><select id="reg"><option>ทั้งประเทศ</option><option>เหนือ</option><option>อีสาน</option><option>กลาง</option><option>ใต้</option><option value="EEC">EEC</option></select></div>
   <div class="fl"><span>จังหวัด</span><select id="prov"></select></div>
   <div class="fl"><span>เพศ</span><div class="seg" id="sex"><button data-v="all" class="on">ทั้งหมด</button><button data-v="m">ชาย</button><button data-v="f">หญิง</button></div></div>
@@ -73,18 +74,18 @@ select.inl{background:var(--card);color:var(--ink);border:1px solid var(--line);
 <section class="page on" id="p1">
  <div class="banner" id="banner"></div>
  <div class="grid g4" id="kpis"></div>
- <div class="grid g2" style="margin-top:14px">
-  <div class="card"><h3>ปิรามิดประชากร <span id="pyA"></span></h3><div class="sub">จำนวนคน แยกกลุ่มอายุ 5 ปี (ซ้าย = ชาย, ขวา = หญิง)</div><div class="ch tall"><canvas id="pyrA"></canvas></div></div>
-  <div class="card"><h3>ปิรามิดประชากร <span id="pyB"></span></h3><div class="sub">เทียบรูปทรง: ฐานกว้าง → ฐานแคบ ("เจดีย์คว่ำ")</div><div class="ch tall"><canvas id="pyrB"></canvas></div></div>
- </div>
+ <div class="card" style="margin-top:14px"><h3>เปรียบเทียบประชากรแต่ละช่วงอายุ (แผนภูมิแท่งแบบจัดกลุ่ม)</h3>
+  <div class="sub">กดเลือกปีที่ต้องการเปรียบเทียบ (เลือกได้หลายปี) · เอาเมาส์ชี้/แตะที่ช่วงอายุเพื่อดูจำนวนคนของทุกปีที่เลือก</div>
+  <div id="chips" class="chips"></div>
+  <div class="ch tall" style="height:460px"><canvas id="grp"></canvas></div>
+  <div style="overflow:auto;margin-top:8px"><table class="t" id="grpTbl"></table></div></div>
  <div class="card" style="margin-top:14px"><h3>สัดส่วน 3 วัย</h3><div class="ch" style="height:120px"><canvas id="share3"></canvas></div></div>
 </section>
 
 <section class="page" id="p2">
  <div class="grid g4" id="kpis2"></div>
  <div class="grid g2" style="margin-top:14px">
-  <div class="card"><h3>จำนวนเกิดเทียบจำนวนตาย</h3><div class="sub" id="bdSub"></div><div class="ch"><canvas id="bd"></canvas></div><div class="note" id="bdNote"></div></div>
-  <div class="card"><h3>อัตราเจริญพันธุ์รวม (TFR) เทียบระดับทดแทน 2.1</h3><div class="sub">TFR โดยประมาณจากทะเบียนราษฎร์ (ประชากรอายุ &lt;1 ปี ÷ หญิงวัยเจริญพันธุ์ ถ่วงด้วยรูปแบบอายุมารดาไทย)</div><div class="ch"><canvas id="tfr"></canvas></div></div>
+  <div class="card"><h3>จำนวนเกิดเทียบจำนวนผู้เสียชีวิต</h3><div class="sub" id="bdSub"></div><div class="ch"><canvas id="bd"></canvas></div><div class="note" id="bdNote"></div></div>
   <div class="card"><h3>อัตราเกิดหยาบ (CBR) ต่อ 1,000 ประชากร</h3><div class="sub">ประชากรอายุ &lt;1 ปี ÷ ประชากรรวม × 1,000</div><div class="ch"><canvas id="cbr"></canvas></div></div>
   <div class="card"><h3>Heatmap: ดัชนีการเกิด รายปี × ภูมิภาค (ปีแรกของช่วง = 100)</h3><div class="sub">ข้อมูลรายเดือนไม่เปิดเผยผ่านช่องทางที่เข้าถึงได้ จึงใช้ปี × ภูมิภาคแทน Calendar Heatmap</div><div style="overflow:auto"><table class="heat" id="heat"></table></div></div>
  </div>
@@ -94,7 +95,7 @@ select.inl{background:var(--card);color:var(--ink);border:1px solid var(--line);
  <div class="grid g2">
   <div class="card" style="grid-column:1/-1">
    <h3>แผนที่ประเทศไทย (Choropleth) <select class="inl" id="mapMetric"><option value="eld">สัดส่วนผู้สูงอายุ 60+ (%)</option><option value="cbr">อัตราเกิดหยาบ (ต่อ 1,000)</option><option value="oadr">Old-age dependency ratio</option><option value="tfr">TFR โดยประมาณ</option></select></h3>
-   <div class="sub" id="mapSub">คลิกจังหวัดเพื่อเลือกเป็นตัวกรองส่วนกลาง</div>
+   <div class="sub" id="mapSub">แสดงชื่อจังหวัดและค่าสถิติบนแผนที่ · คลิกจังหวัดเพื่อเลือกเป็นตัวกรองส่วนกลาง</div>
    <div id="map"></div><div id="legend" class="note"></div>
   </div>
   <div class="card"><h3>Top 10: อัตราเกิดต่ำสุด</h3><div class="sub">อัตราเกิดหยาบ ต่อ 1,000 ประชากร</div><table class="t" id="rkBirth"></table></div>
@@ -104,7 +105,7 @@ select.inl{background:var(--card);color:var(--ink);border:1px solid var(--line);
 
 <section class="page" id="p4">
  <div class="grid g2">
-  <div class="card"><h3>ประชากรแยก 3 วัย (Stacked Area)</h3><div class="sub">วัยแรงงาน 15-59 ปี หดตัวขณะที่ 60+ ขยายตัว</div><div class="ch"><canvas id="area"></canvas></div></div>
+  <div class="card"><h3>ประชากรแยก 3 วัย (แผนภูมิแท่ง Stacked)</h3><div class="sub">วัยแรงงาน 15-59 ปี หดตัวขณะที่ 60+ ขยายตัว</div><div class="ch"><canvas id="area"></canvas></div></div>
   <div class="card"><h3>ภาระพึ่งพิง และ "วัยแรงงานต่อผู้สูงอายุ 1 คน"</h3><div class="sub">Old-age DR = 60+ ÷ (15-59) × 100</div><div class="ch"><canvas id="dr"></canvas></div></div>
   <div class="card"><h3>GPP ต่อหัว vs อัตราเกิด (Bubble)</h3><div class="sub">แต่ละฟองคือ 1 จังหวัด ขนาด = ประชากร · GPP ต่อหัว ปี 2562 (สศช.) · อัตราเกิดปีสุดท้ายของช่วงเวลา</div><div class="ch tall"><canvas id="bub"></canvas></div><div class="note" id="corr"></div></div>
   <div class="card"><h3>ประมาณการงบเบี้ยผู้สูงอายุ + ค่าใช้จ่ายสุขภาพภาครัฐ</h3><div class="sub">พันล้านบาท/ปี ราคาคงที่ (ย้อนหลังจากโครงสร้างอายุจริง, อนาคตจากแบบจำลอง Baseline)</div>
@@ -158,7 +159,7 @@ const fmt1 = (n,d=1) => n.toLocaleString('th-TH',{minimumFractionDigits:d,maximu
 const P = D.provinces, PBY = Object.fromEntries(P.map(p=>[p.c,p]));
 const YEARS = D.years, YMIN = YEARS[0], YMAX = YEARS[YEARS.length-1], PMAX = 2583;
 const BAND = ['0-4','5-9','10-14','15-19','20-24','25-29','30-34','35-39','40-44','45-49','50-54','55-59','60-64','65-69','70-74','75-79','80-84','85-89','90-94','95-99','100+'];
-const S = {y0:2553,y1:YMAX,reg:'ทั้งประเทศ',prov:'',sex:'all',page:'p1'};
+const S = {cmp:[2553,2568],y0:2553,y1:YMAX,reg:'ทั้งประเทศ',prov:'',sex:'all',page:'p1'};
 const COL = {c:'#14b8a6',w:'#3b82f6',e:'#f97316',m:'#3b82f6',f:'#ec4899'};
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 Chart.defaults.font.family = "'Noto Sans Thai',sans-serif";
@@ -224,10 +225,10 @@ function costSingle(r,cov,h,wgt){ let al=0; for(const [a,b2,rate] of ALLOW){ al+
 const $=id=>document.getElementById(id);
 function setup(){
   const pv=$('prov'); pv.innerHTML='<option value="">ทุกจังหวัดในพื้นที่</option>'+P.slice().sort((a,b)=>a.n.localeCompare(b.n,'th')).map(p=>`<option value="${p.c}">${p.n}</option>`).join('');
-  for(const id of ['y0','y1']){ const e=$(id); e.min=YMIN; e.max=PMAX; e.step=1; }
+  for(const id of ['y0','y1']) $(id).innerHTML=YEARS.map(y=>`<option value="${y}">${y}</option>`).join('');
   $('y0').value=S.y0; $('y1').value=S.y1;
-  $('y0').oninput=()=>{ if(+$('y0').value>+$('y1').value-1) $('y0').value=+$('y1').value-1; S.y0=+$('y0').value; render(); };
-  $('y1').oninput=()=>{ if(+$('y1').value<+$('y0').value+1) $('y1').value=+$('y0').value+1; S.y1=+$('y1').value; render(); };
+  $('y0').onchange=()=>{ S.y0=+$('y0').value; if(S.y0>=S.y1){S.y1=Math.min(YMAX,S.y0+1); $('y1').value=S.y1; if(S.y0>=S.y1){S.y0=S.y1-1;$('y0').value=S.y0;}} render(); };
+  $('y1').onchange=()=>{ S.y1=+$('y1').value; if(S.y1<=S.y0){S.y0=Math.max(YMIN,S.y1-1); $('y0').value=S.y0; if(S.y1<=S.y0){S.y1=S.y0+1;$('y1').value=S.y1;}} render(); };
   $('reg').onchange=e=>{S.reg=e.target.value;S.prov='';$('prov').value='';render()};
   $('prov').onchange=e=>{S.prov=e.target.value;render()};
   $('sex').onclick=e=>{ if(!e.target.dataset.v) return; S.sex=e.target.dataset.v; [...$('sex').children].forEach(b=>b.classList.toggle('on',b===e.target)); render(); };
@@ -238,13 +239,18 @@ function setup(){
 }
 const hy1=()=>Math.min(S.y1,YMAX), hy0=()=>Math.min(S.y0,hy1()-1);
 function kpi(l,n,d){return `<div class="card kpi"><div class="l">${l}</div><div class="n">${n}</div><div class="d">${d||''}</div></div>`}
-function pyramid(id,y,codes){
-  const bm=bandsOf(y,codes,'m'), bf=bandsOf(y,codes,'f'); const showM=S.sex!=='f', showF=S.sex!=='m';
-  const lab=BAND.slice().reverse(), dm=bm.slice().reverse().map(v=>showM?-v:0), df=bf.slice().reverse().map(v=>showF?v:0);
-  const mx=Math.max(...bm,...bf)*1.05;
-  mk(id,{type:'bar',data:{labels:lab,datasets:[{label:'ชาย',data:dm,backgroundColor:COL.m},{label:'หญิง',data:df,backgroundColor:COL.f}]},
-   options:{indexAxis:'y',scales:{x:{stacked:true,min:-mx,max:mx,ticks:{callback:v=>fmt(Math.abs(v)/1000)+'k'}},y:{stacked:true}},
-    plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(Math.abs(c.raw))} คน`}}},datasets:{bar:{barPercentage:1,categoryPercentage:.9}}}});
+const YCOL=['#94a3b8','#14b8a6','#3b82f6','#a855f7','#f59e0b','#ec4899','#22c55e','#ef4444','#0ea5e9','#84cc16'];
+function grouped(codes){
+  const ch=$('chips');
+  ch.innerHTML=YEARS.map(y=>`<button data-y="${y}" class="${S.cmp.includes(y)?'on':''}">${y}</button>`).join('');
+  ch.onclick=e=>{ const y=+e.target.dataset.y; if(!y) return; const i=S.cmp.indexOf(y); if(i>=0){ if(S.cmp.length>1) S.cmp.splice(i,1); } else { S.cmp.push(y); S.cmp.sort((a,b)=>a-b); } page1(); };
+  const ys=S.cmp.slice().sort((a,b)=>a-b), data=ys.map(y=>bandsOf(y,codes,S.sex));
+  mk('grp',{type:'bar',data:{labels:BAND,datasets:ys.map((y,i)=>({label:'พ.ศ. '+y,data:data[i],backgroundColor:YCOL[i%YCOL.length]}))},
+   options:{interaction:{mode:'index',intersect:false},scales:{x:{title:{display:true,text:'ช่วงอายุ (ปี)'}},y:{title:{display:true,text:'จำนวนประชากร (คน)'},ticks:{callback:v=>fmt(v/1000)+'k'}}},
+    plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.raw)} คน`}}}}});
+  $('grpTbl').innerHTML='<tr><th>ช่วงอายุ</th>'+ys.map(y=>`<th>พ.ศ. ${y}</th>`).join('')+(ys.length>1?`<th>เปลี่ยนแปลง (${ys[0]}→${ys[ys.length-1]})</th>`:'')+'</tr>'+
+   BAND.map((b,k)=>`<tr><td>${b}</td>`+data.map(d=>`<td>${fmt(d[k])}</td>`).join('')+(ys.length>1?`<td class="${data[data.length-1][k]<data[0][k]?'dn':'up'}">${fmt1((data[data.length-1][k]/data[0][k]-1)*100)}%</td>`:'')+'</tr>').join('')+
+   '<tr><th>รวม</th>'+data.map(d=>`<th>${fmt(sum(d,0,21))}</th>`).join('')+(ys.length>1?`<th>${fmt1((sum(data[data.length-1],0,21)/sum(data[0],0,21)-1)*100)}%</th>`:'')+'</tr>';
 }
 function page1(){
   const codes=codesNow(), y1=hy1(), y0=hy0(), m=metrics(y1,codes), mp=metrics(y1-1,codes);
@@ -260,8 +266,7 @@ function page1(){
     kpi('เด็กเกิดใหม่ล่าสุด (คน)',fmt(bn),bsub)+
     kpi('Old-Age Dependency Ratio',fmt1(m.oadr),`60+ ต่อวัยแรงงาน 100 คน · ปี ${y0}: ${fmt1(mo.oadr)}`)+
     kpi('สัดส่วน 3 วัย (0-14 / 15-59 / 60+)',`${fmt1(m.c/m.tot*100,0)} / ${fmt1(m.w/m.tot*100,0)} / ${fmt1(m.e/m.tot*100,0)} %`,`ปี ${y0}: ${fmt1(mo.c/mo.tot*100,0)} / ${fmt1(mo.w/mo.tot*100,0)} / ${fmt1(mo.e/mo.tot*100,0)} %`);
-  $('pyA').textContent='พ.ศ. '+y0; $('pyB').textContent='พ.ศ. '+y1;
-  pyramid('pyrA',y0,codes); pyramid('pyrB',y1,codes);
+  grouped(codes);
   const e=m.eld; const lvl=e>=28?['สังคมสูงวัยระดับสุดยอด (Super-Aged Society, 60+ ≥ 28%)','#b42318']:e>=20?['สังคมสูงวัยโดยสมบูรณ์ (Aged Society, 60+ ≥ 20%)','#f97316']:e>=10?['เข้าสู่สังคมสูงวัย (Aging Society, 60+ ≥ 10%)','#f59e0b']:['ยังไม่ถึงเกณฑ์สังคมสูงวัย','#14b8a6'];
   const to28 = e<28 && national ? (()=>{ const r=project(...aggSingle(codes),{tfrBase:tfrBaseFor(codes)}) ; const hit=r.find(x=>{const s=st(x);return (s.e/s.tot)>=.28}); return hit?` คาดว่าเข้าเกณฑ์ Super-Aged (≥28%) ราวปี ${hit.y}.`:''; })():'';
   $('banner').innerHTML=`<b>⚠ ${areaName()} พ.ศ. ${y1}:</b> ${lvl[0]} — ผู้สูงอายุ <b>${fmt1(e)}%</b> (จาก ${fmt1(mo.eld)}% ในปี ${y0}), วัยแรงงาน ${fmt1(m.w/m.tot*100)}% (จาก ${fmt1(mo.w/mo.tot*100)}%), วัยแรงงาน ${fmt1(m.sup)} คนต่อผู้สูงอายุ 1 คน (จาก ${fmt1(mo.sup)}).${to28}`;
@@ -274,26 +279,24 @@ function page2(){
   const ys=YEARS.filter(y=>y>=y0&&y<=y1);
   const m1=metrics(y1,codes,'all'), m0=metrics(y0,codes,'all');
   const bo=D.births_official, dof=D.deaths_official;
-  $('kpis2').innerHTML=kpi('CBR (ต่อ 1,000)',fmt1(m1.cbr,1),`ปี ${y0}: ${fmt1(m0.cbr,1)}`)+kpi('TFR โดยประมาณ',fmt1(m1.tfr,2),`ทดแทน = 2.10 · ต่ำกว่า ${fmt1((1-m1.tfr/2.1)*100,0)}%`)+
+  $('kpis2').innerHTML=kpi('CBR (ต่อ 1,000)',fmt1(m1.cbr,1),`ปี ${y0}: ${fmt1(m0.cbr,1)}`)+kpi('ประชากรรวม',fmt(m1.tot),`ปี ${y0}: ${fmt(m0.tot)}`)+
     kpi('เด็กอายุ <1 ปี',fmt(m1.a0),`ปี ${y0}: ${fmt(m0.a0)} (${fmt1((m1.a0/m0.a0-1)*100,0)}%)`)+
-    kpi('การเกิด vs การตาย (ปีล่าสุด)',national&&bo[y1]&&dof[y1]?`${fmt(bo[y1])} vs ${fmt(dof[y1])}`:'—',national&&bo[y1]&&dof[y1]?`ธรรมชาติ ${fmt(bo[y1]-dof[y1])} คน/ปี`:'ข้อมูลเกิด-ตายรายปีมีเฉพาะระดับประเทศ');
+    kpi('เกิด vs ผู้เสียชีวิต (ปีล่าสุด)',national&&bo[y1]&&dof[y1]?`${fmt(bo[y1])} vs ${fmt(dof[y1])}`:'—',national&&bo[y1]&&dof[y1]?`ธรรมชาติ ${fmt(bo[y1]-dof[y1])} คน/ปี`:'ข้อมูลเกิด-เสียชีวิตรายปีมีเฉพาะระดับประเทศ');
   if(national){
     const yy=[]; for(let y=Math.max(2554,y0);y<=y1;y++) yy.push(y);
     const mb=D.births_moph, md=D.deaths_moph;
-    mk('bd',{data:{labels:yy,datasets:[
-      {type:'bar',label:'เกิด (กรมการปกครอง)',data:yy.map(y=>bo[y]??null),backgroundColor:COL.c+'cc'},
-      {type:'line',label:'ตาย (กรมการปกครอง)',data:yy.map(y=>dof[y]??null),borderColor:'#b42318',backgroundColor:'#b42318',tension:.2,pointRadius:4},
-      {type:'line',label:'เกิด (สธ. ชุดสถิติสาธารณสุข)',data:yy.map(y=>mb[y]??null),borderColor:COL.c,borderDash:[4,3],showLine:false,pointStyle:'triangle',pointRadius:6,backgroundColor:COL.c},
-      {type:'line',label:'ตาย (สธ.)',data:yy.map(y=>md[y]??null),borderColor:'#b42318',showLine:false,pointStyle:'triangle',pointRadius:6,backgroundColor:'#b42318'}]},
-      options:{scales:{y:{ticks:{callback:v=>fmt(v/1000)+'k'}}},plugins:{legend:{position:'bottom'}}}});
+    mk('bd',{type:'bar',data:{labels:yy,datasets:[
+      {label:'จำนวนเกิด (กรมการปกครอง)',data:yy.map(y=>bo[y]??null),backgroundColor:COL.c},
+      {label:'ผู้เสียชีวิต (กรมการปกครอง)',data:yy.map(y=>dof[y]??null),backgroundColor:'#b42318'},
+      {label:'จำนวนเกิด (สธ.)',data:yy.map(y=>mb[y]??null),backgroundColor:COL.c+'66'},
+      {label:'ผู้เสียชีวิต (สธ.)',data:yy.map(y=>md[y]??null),backgroundColor:'#b4231866'}]},
+      options:{interaction:{mode:'index',intersect:false},scales:{y:{ticks:{callback:v=>fmt(v/1000)+'k'}}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.raw)} คน`}}}}});
     $('bdSub').textContent='ระดับประเทศ · ข้อมูลทางการที่รวบรวมได้ (ปีที่ไม่มีข้อมูลจะเว้นว่าง)';
-    $('bdNote').textContent='จุดตัด: ตั้งแต่ พ.ศ. 2564 จำนวนตายสูงกว่าจำนวนเกิดต่อเนื่อง (ข้อมูลทะเบียนราษฎร์). ชุดทางการแต่ละแหล่งใช้วิธีรวบรวมต่างกัน จึงแสดงแยกกัน (▲ = สถิติสาธารณสุข).';
+    $('bdNote').textContent='จุดตัด: ตั้งแต่ พ.ศ. 2564 จำนวนผู้เสียชีวิตสูงกว่จำนวนเกิดต่อเนื่อง (ข้อมูลทะเบียนราษฎร์). ชุดทางการแต่ละแหล่งใช้วิธีรวบรวมต่างกัน จึงแสดงแยกกัน (แท่งสีจาง = สถิติสาธารณสุข).';
   } else {
     mk('bd',{type:'bar',data:{labels:ys,datasets:[{label:'ประชากรอายุ <1 ปี ('+areaName()+')',data:ys.map(y=>metrics(y,codes,'all').a0),backgroundColor:COL.c}]},options:{plugins:{legend:{position:'bottom'}}}});
-    $('bdSub').textContent='ระดับพื้นที่: ใช้ประชากรอายุ <1 ปี เป็นตัวแทนการเกิด (ไม่มีสถิติตายรายจังหวัดในแหล่งที่เข้าถึงได้)'; $('bdNote').textContent='';
+    $('bdSub').textContent='ระดับพื้นที่: ใช้ประชากรอายุ <1 ปี เป็นตัวแทนการเกิด (ไม่มีสถิติผู้เสียชีวิตรายจังหวัดในแหล่งที่เข้าถึงได้)'; $('bdNote').textContent='';
   }
-  const tf=ys.map(y=>metrics(y,codes,'all').tfr);
-  mk('tfr',{type:'line',data:{labels:ys,datasets:[{label:'TFR โดยประมาณ',data:tf,borderColor:COL.c,backgroundColor:COL.c,tension:.25,pointRadius:2},{label:'ระดับทดแทน 2.1',data:ys.map(()=>2.1),borderColor:'#b42318',borderDash:[6,4],pointRadius:0}]},options:{scales:{y:{min:0,suggestedMax:2.4}},plugins:{legend:{position:'bottom'}}}});
   mk('cbr',{type:'line',data:{labels:ys,datasets:[{label:'CBR',data:ys.map(y=>metrics(y,codes,'all').cbr),borderColor:COL.w,backgroundColor:COL.w+'33',fill:true,tension:.25}]},options:{plugins:{legend:{display:false}}}});
   // heatmap region x year
   const regs=['เหนือ','อีสาน','กลาง','ใต้','EEC']; const hy=ys.filter((_,i)=>i%Math.max(1,Math.ceil(ys.length/14))===0||ys[i]===y1);
@@ -311,7 +314,7 @@ function page3(){
   const rev = mt==='cbr'||mt==='tfr';
   const sc=d3.scaleSequential(rev?d3.interpolateYlGnBu:d3.interpolateYlOrRd).domain(rev?[hi,lo]:[lo,hi]);
   const svg=d3.select('#map'); svg.selectAll('*').remove();
-  const W=$('map').clientWidth||800,H=560; const el=svg.append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('width','100%').attr('height',H);
+  const W=$('map').clientWidth||800,H=820; const el=svg.append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('width','100%').attr('height',H);
   const proj=d3.geoMercator().fitSize([W,H],GEO), path=d3.geoPath(proj);
   const tip=$('tip'); const unit={eld:'%',cbr:' ต่อ 1,000',oadr:'',tfr:''}[mt];
   el.selectAll('path').data(GEO.features).join('path').attr('d',path).attr('fill',f=>sc(vals[f.properties.c])).attr('opacity',f=>inReg.has(f.properties.c)?1:.18)
@@ -319,6 +322,10 @@ function page3(){
    .on('mousemove',(ev,f)=>{const p=PBY[f.properties.c];tip.style.display='block';tip.style.left=ev.clientX+12+'px';tip.style.top=ev.clientY+12+'px';tip.innerHTML=`<b>${p.n}</b> (${p.reg})<br>${$('mapMetric').selectedOptions[0].text}: <b>${fmt1(vals[p.c],mt==='tfr'?2:1)}${unit}</b>`})
    .on('mouseleave',()=>tip.style.display='none')
    .on('click',(ev,f)=>{S.prov=S.prov===f.properties.c?'':f.properties.c;$('prov').value=S.prov;render()});
+  const g=el.append('g').style('pointer-events','none').attr('font-family',"'Noto Sans Thai',sans-serif").attr('text-anchor','middle');
+  for(const f of GEO.features){ const c=f.properties.c; if(!inReg.has(c)) continue; const [x,yy]=path.centroid(f); if(isNaN(x)) continue;
+    const t=g.append('text').attr('x',x).attr('y',yy).attr('font-size',8.5).attr('fill','#111').attr('stroke','#fff').attr('stroke-width',2.4).attr('paint-order','stroke').attr('stroke-linejoin','round');
+    t.append('tspan').attr('x',x).attr('dy','-0.1em').text(PBY[c].n); t.append('tspan').attr('x',x).attr('dy','1.05em').attr('font-weight',700).text(fmt1(vals[c],mt==='tfr'?2:1)); }
   $('legend').innerHTML=`พ.ศ. ${y} · ต่ำสุด ${fmt1(lo,mt==='tfr'?2:1)} → สูงสุด ${fmt1(hi,mt==='tfr'?2:1)} ${unit}${rev?' (สีเข้ม = ต่ำ)':' (สีเข้ม = สูง)'}`;
   const list=P.filter(p=>inReg.has(p.c)).map(p=>({p,m:metrics(y,[p.c],'all')}));
   const tr=(rows,key,max)=> '<tr><th>#</th><th>จังหวัด</th><th>ภาค</th><th>ค่า</th><th></th></tr>'+rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.p.n}</td><td>${r.p.reg}</td><td>${fmt1(r.m[key],1)}</td><td style="width:90px"><div class="bar" style="width:${r.m[key]/max*100}%"></div></td></tr>`).join('');
@@ -330,8 +337,8 @@ function pearson(x,y){const n=x.length,mx=d3.mean(x),my=d3.mean(y);let a=0,b=0,c
 function page4(){
   const codes=codesNow(), y0=hy0(), y1=hy1(), ys=YEARS.filter(y=>y>=y0&&y<=y1);
   const ms=ys.map(y=>metrics(y,codes));
-  mk('area',{type:'line',data:{labels:ys,datasets:[['เด็ก 0-14',COL.c,'c'],['วัยแรงงาน 15-59',COL.w,'w'],['ผู้สูงอายุ 60+',COL.e,'e']].map(([l,c,k])=>({label:l,data:ms.map(m=>m[k]),borderColor:c,backgroundColor:c+'bb',fill:true,pointRadius:0}))},
-    options:{scales:{y:{stacked:true,ticks:{callback:v=>fmt1(v/1e6,0)+' ล้าน'}}},plugins:{legend:{position:'bottom'}},interaction:{mode:'index',intersect:false}}});
+  mk('area',{type:'bar',data:{labels:ys,datasets:[['เด็ก 0-14',COL.c,'c'],['วัยแรงงาน 15-59',COL.w,'w'],['ผู้สูงอายุ 60+',COL.e,'e']].map(([l,c,k])=>({label:l,data:ms.map(m=>m[k]),backgroundColor:c}))},
+    options:{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>fmt1(v/1e6,0)+' ล้าน'}}},plugins:{legend:{position:'bottom'}},interaction:{mode:'index',intersect:false}}});
   mk('dr',{data:{labels:ys,datasets:[{type:'line',label:'Old-age DR',data:ms.map(m=>m.oadr),borderColor:COL.e,backgroundColor:COL.e,yAxisID:'y',tension:.2,pointRadius:0},{type:'line',label:'Child DR',data:ms.map(m=>m.c/m.w*100),borderColor:COL.c,yAxisID:'y',tension:.2,pointRadius:0},{type:'bar',label:'วัยแรงงานต่อผู้สูงอายุ 1 คน',data:ms.map(m=>m.sup),backgroundColor:COL.w+'55',yAxisID:'y2'}]},
     options:{scales:{y:{title:{display:true,text:'ต่อวัยแรงงาน 100 คน'}},y2:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'คน'}}},plugins:{legend:{position:'bottom'}}}});
   // bubble
@@ -345,7 +352,7 @@ function page4(){
   // cost
   const h=+$('cH').value,w=+$('cW').value,cv=+$('cC').value/100; $('cHv').textContent=fmt(h); $('cWv').textContent=w+'×'; $('cCv').textContent=(cv*100)+'%';
   const hist=YEARS.filter(y=>y>=Math.max(y0,2553)&&y<=YMAX).map(y=>({y,...costBands(bandsOf(y,codes),cv,h,w)}));
-  const [m0,f0]=aggSingle(codes); const pr=project(m0,f0,{tfrBase:tfrBaseFor(codes)}).slice(1).filter(r=>r.y<=Math.max(S.y1,2583)).map(r=>({y:r.y,...costSingle(r,cv,h,w)}));
+  const [m0,f0]=aggSingle(codes); const pr=project(m0,f0,{tfrBase:tfrBaseFor(codes)}).slice(1).filter(r=>r.y<=2583).map(r=>({y:r.y,...costSingle(r,cv,h,w)}));
   const all=[...hist,...pr];
   mk('cost',{type:'bar',data:{labels:all.map(r=>r.y),datasets:[{label:'เบี้ยยังชีพผู้สูงอายุ',data:all.map(r=>r.al),backgroundColor:all.map(r=>r.y>YMAX?COL.e+'77':COL.e)},{label:'ค่าสุขภาพภาครัฐ (สมมติฐาน)',data:all.map(r=>r.hl),backgroundColor:all.map(r=>r.y>YMAX?COL.w+'77':COL.w)}]},
    options:{scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'พันล้านบาท'}}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{footer:i=>'รวม '+fmt(i.reduce((s,x)=>s+x.raw,0))+' พันล้านบาท'+(+i[0].label>YMAX?' (คาดการณ์)':'')}}}}});
@@ -368,7 +375,6 @@ function page5(){
   mk('fpy',{type:'bar',data:{labels:lab,datasets:[{label:'Baseline',data:sb,backgroundColor:'#98a2b8'},{label:'Scenario',data:ssn,backgroundColor:COL.e}]},options:{plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>fmt(v/1000)+'k'}}}}});
 }
 function render(){
-  $('yrLbl').textContent=S.y0+' – '+S.y1+(S.y1>YMAX?' (ถึง '+YMAX+' เป็นข้อมูลจริง)':'');
   ({p1:page1,p2:page2,p3:page3,p4:page4,p5:page5})[S.page]();
 }
 setup(); render();
