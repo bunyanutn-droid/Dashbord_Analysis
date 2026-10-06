@@ -47,6 +47,7 @@ table.t{width:100%;border-collapse:collapse;font-size:13px}table.t td,table.t th
 .pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;background:var(--line);margin-right:4px}
 footer{max-width:1280px;margin:0 auto;padding:0 16px 40px;color:var(--mute);font-size:12px;line-height:1.6}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}.chips button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}.chips button.on{background:var(--c2);border-color:var(--c2);color:#fff;font-weight:600}
+.zb{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:4px}.zb button{width:34px;height:34px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;font-size:16px;cursor:pointer}
 select.inl{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit}
 </style>
 </head>
@@ -95,8 +96,8 @@ select.inl{background:var(--card);color:var(--ink);border:1px solid var(--line);
  <div class="grid g2">
   <div class="card" style="grid-column:1/-1">
    <h3>แผนที่ประเทศไทย (Choropleth) <select class="inl" id="mapMetric"><option value="eld">สัดส่วนผู้สูงอายุ 60+ (%)</option><option value="cbr">อัตราเกิดหยาบ (ต่อ 1,000)</option><option value="oadr">Old-age dependency ratio</option><option value="tfr">TFR โดยประมาณ</option></select></h3>
-   <div class="sub" id="mapSub">แสดงชื่อจังหวัดและค่าสถิติบนแผนที่ · คลิกจังหวัดเพื่อเลือกเป็นตัวกรองส่วนกลาง</div>
-   <div id="map"></div><div id="legend" class="note"></div>
+   <div class="sub" id="mapSub">แสดงชื่อจังหวัดและค่าสถิติบนแผนที่ · เลื่อนล้อเมาส์/ปุ่ม ＋ － เพื่อซูม ลากเพื่อเลื่อน (ตัวอักษรเล็กลงตามเมื่อซูมเข้า) · คลิกจังหวัดเพื่อเลือกเป็นตัวกรองส่วนกลาง</div>
+   <div style="position:relative"><div id="map"></div><div class="zb"><button onclick="mapZoom.by(1.6)">＋</button><button onclick="mapZoom.by(1/1.6)">－</button><button onclick="mapZoom.reset()">⟲</button></div></div><div id="legend" class="note"></div>
   </div>
   <div class="card"><h3>Top 10: อัตราเกิดต่ำสุด</h3><div class="sub">อัตราเกิดหยาบ ต่อ 1,000 ประชากร</div><table class="t" id="rkBirth"></table></div>
   <div class="card"><h3>Top 10: สัดส่วนผู้สูงอายุสูงสุด</h3><div class="sub">ประชากร 60+ ปี เป็น % ของประชากรจังหวัด</div><table class="t" id="rkElder"></table></div>
@@ -306,7 +307,7 @@ function page2(){
   $('heat').innerHTML=h;
 }
 function metricOf(c,y,mt){ const m=metrics(y,[c],'all'); return {eld:m.eld,cbr:m.cbr,oadr:m.oadr,tfr:m.tfr}[mt]; }
-let mapBuilt=false;
+let mapBuilt=false, mapT=null;
 function page3(){
   const y=hy1(), mt=$('mapMetric').value, inReg=new Set(S.reg==='ทั้งประเทศ'?P.map(p=>p.c):codesNowRegion());
   const vals={}; for(const p of P) vals[p.c]=metricOf(p.c,y,mt);
@@ -317,15 +318,20 @@ function page3(){
   const W=$('map').clientWidth||800,H=820; const el=svg.append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('width','100%').attr('height',H);
   const proj=d3.geoMercator().fitSize([W,H],GEO), path=d3.geoPath(proj);
   const tip=$('tip'); const unit={eld:'%',cbr:' ต่อ 1,000',oadr:'',tfr:''}[mt];
-  el.selectAll('path').data(GEO.features).join('path').attr('d',path).attr('fill',f=>sc(vals[f.properties.c])).attr('opacity',f=>inReg.has(f.properties.c)?1:.18)
+  const gz=el.append('g'); const gp=gz.append('g');
+  gp.selectAll('path').data(GEO.features).join('path').attr('d',path).attr('fill',f=>sc(vals[f.properties.c])).attr('opacity',f=>inReg.has(f.properties.c)?1:.18)
    .attr('stroke',f=>f.properties.c===S.prov?'#000':null).attr('stroke-width',f=>f.properties.c===S.prov?2:null)
    .on('mousemove',(ev,f)=>{const p=PBY[f.properties.c];tip.style.display='block';tip.style.left=ev.clientX+12+'px';tip.style.top=ev.clientY+12+'px';tip.innerHTML=`<b>${p.n}</b> (${p.reg})<br>${$('mapMetric').selectedOptions[0].text}: <b>${fmt1(vals[p.c],mt==='tfr'?2:1)}${unit}</b>`})
    .on('mouseleave',()=>tip.style.display='none')
    .on('click',(ev,f)=>{S.prov=S.prov===f.properties.c?'':f.properties.c;$('prov').value=S.prov;render()});
-  const g=el.append('g').style('pointer-events','none').attr('font-family',"'Noto Sans Thai',sans-serif").attr('text-anchor','middle');
+  const g=gz.append('g').attr('class','lbl').style('pointer-events','none').attr('font-family',"'Noto Sans Thai',sans-serif").attr('text-anchor','middle');
   for(const f of GEO.features){ const c=f.properties.c; if(!inReg.has(c)) continue; const [x,yy]=path.centroid(f); if(isNaN(x)) continue;
     const t=g.append('text').attr('x',x).attr('y',yy).attr('font-size',8.5).attr('fill','#111').attr('stroke','#fff').attr('stroke-width',2.4).attr('paint-order','stroke').attr('stroke-linejoin','round');
     t.append('tspan').attr('x',x).attr('dy','-0.1em').text(PBY[c].n); t.append('tspan').attr('x',x).attr('dy','1.05em').attr('font-weight',700).text(fmt1(vals[c],mt==='tfr'?2:1)); }
+  const apply=k=>{ g.selectAll('text').attr('font-size',8.5/k).attr('stroke-width',2.4/k); gp.selectAll('path').attr('stroke-width',f=>(f.properties.c===S.prov?2:.4)/k); };
+  const zoom=d3.zoom().scaleExtent([1,14]).translateExtent([[0,0],[W,H]]).extent([[0,0],[W,H]]).on('zoom',ev=>{ gz.attr('transform',ev.transform); apply(ev.transform.k); mapT=ev.transform; });
+  el.call(zoom); if(mapT) el.call(zoom.transform,mapT);
+  window.mapZoom={by:k=>el.transition().duration(250).call(zoom.scaleBy,k),reset:()=>el.transition().duration(250).call(zoom.transform,d3.zoomIdentity)};
   $('legend').innerHTML=`พ.ศ. ${y} · ต่ำสุด ${fmt1(lo,mt==='tfr'?2:1)} → สูงสุด ${fmt1(hi,mt==='tfr'?2:1)} ${unit}${rev?' (สีเข้ม = ต่ำ)':' (สีเข้ม = สูง)'}`;
   const list=P.filter(p=>inReg.has(p.c)).map(p=>({p,m:metrics(y,[p.c],'all')}));
   const tr=(rows,key,max)=> '<tr><th>#</th><th>จังหวัด</th><th>ภาค</th><th>ค่า</th><th></th></tr>'+rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.p.n}</td><td>${r.p.reg}</td><td>${fmt1(r.m[key],1)}</td><td style="width:90px"><div class="bar" style="width:${r.m[key]/max*100}%"></div></td></tr>`).join('');
