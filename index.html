@@ -82,6 +82,7 @@ select.inl{background:var(--card);color:var(--ink);border:1px solid var(--line);
    <div id="grpMc"><h3 style="color:#2563eb;margin:4px 0">ชาย</h3><div class="ch tall" style="height:440px"><canvas id="grpM"></canvas></div></div>
    <div id="grpFc"><h3 style="color:#db2777;margin:4px 0">หญิง</h3><div class="ch tall" style="height:440px"><canvas id="grpF"></canvas></div></div>
   </div></div>
+ <div class="card" style="margin-top:14px"><h3>สัดส่วน 3 วัย (กราฟแท่งแนวนอน)</h3><div class="sub">เด็ก 0-14 / วัยแรงงาน 15-59 / ผู้สูงอายุ 60+ ของปีที่เลือกเปรียบเทียบด้านบน (รวมทั้งสองเพศ)</div><div class="ch" id="s3box"><canvas id="share3"></canvas></div></div>
 </section>
 
 <section class="page" id="p2">
@@ -273,8 +274,10 @@ function page1(){
   const e=m.eld; const lvl=e>=28?['สังคมสูงวัยระดับสุดยอด (Super-Aged Society, 60+ ≥ 28%)','#b42318']:e>=20?['สังคมสูงวัยโดยสมบูรณ์ (Aged Society, 60+ ≥ 20%)','#f97316']:e>=10?['เข้าสู่สังคมสูงวัย (Aging Society, 60+ ≥ 10%)','#f59e0b']:['ยังไม่ถึงเกณฑ์สังคมสูงวัย','#14b8a6'];
   const to28 = e<28 && national ? (()=>{ const r=project(...aggSingle(codes),{tfrBase:tfrBaseFor(codes)}) ; const hit=r.find(x=>{const s=st(x);return (s.e/s.tot)>=.28}); return hit?` คาดว่าเข้าเกณฑ์ Super-Aged (≥28%) ราวปี ${hit.y}.`:''; })():'';
   $('banner').innerHTML=`<b>⚠ ${areaName()} พ.ศ. ${y1}:</b> ${lvl[0]} — ผู้สูงอายุ <b>${fmt1(e)}%</b> (จาก ${fmt1(mo.eld)}% ในปี ${y0}), วัยแรงงาน ${fmt1(m.w/m.tot*100)}% (จาก ${fmt1(mo.w/mo.tot*100)}%), วัยแรงงาน ${fmt1(m.sup)} คนต่อผู้สูงอายุ 1 คน (จาก ${fmt1(mo.sup)}).${to28}`;
-  mk('share3',{type:'bar',data:{labels:[y0,y1].map(y=>'พ.ศ. '+y),datasets:[['เด็ก 0-14',COL.c,[mo.c/mo.tot,m.c/m.tot]],['วัยแรงงาน 15-59',COL.w,[mo.w/mo.tot,m.w/m.tot]],['ผู้สูงอายุ 60+',COL.e,[mo.e/mo.tot,m.e/m.tot]]].map(([l,c,d])=>({label:l,backgroundColor:c,data:d.map(v=>v*100)}))},
-    options:{indexAxis:'y',scales:{x:{stacked:true,max:100,ticks:{callback:v=>v+'%'}},y:{stacked:true}},plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt1(c.raw)}%`}}}}});
+  const sy=S.cmp.slice().sort((a,b)=>a-b), sm=sy.map(y=>metrics(y,codes,'all'));
+  $('s3box').style.height=(110+sy.length*34)+'px';
+  mk('share3',{type:'bar',data:{labels:sy.map(y=>'พ.ศ. '+y),datasets:[['เด็ก 0-14',COL.c,'c'],['วัยแรงงาน 15-59',COL.w,'w'],['ผู้สูงอายุ 60+',COL.e,'e']].map(([l,c,k])=>({label:l,backgroundColor:c,data:sm.map(m=>m[k]/m.tot*100)}))},
+    options:{indexAxis:'y',scales:{x:{stacked:true,max:100,ticks:{callback:v=>v+'%'}},y:{stacked:true}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt1(c.raw)}% (${fmt(sm[c.dataIndex][['c','w','e'][c.datasetIndex]])} คน)`}}}}});
 }
 function series(codes,from,to,fn){ const ys=YEARS.filter(y=>y>=from&&y<=to); return {ys,v:ys.map(y=>fn(metrics(y,codes))) }; }
 function page2(){
