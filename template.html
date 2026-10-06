@@ -76,11 +76,12 @@ select.inl{background:var(--card);color:var(--ink);border:1px solid var(--line);
  <div class="banner" id="banner"></div>
  <div class="grid g4" id="kpis"></div>
  <div class="card" style="margin-top:14px"><h3>เปรียบเทียบประชากรแต่ละช่วงอายุ (แผนภูมิแท่งแบบจัดกลุ่ม)</h3>
-  <div class="sub">กดเลือกปีที่ต้องการเปรียบเทียบ (เลือกได้หลายปี) · เอาเมาส์ชี้/แตะที่ช่วงอายุเพื่อดูจำนวนคนของทุกปีที่เลือก</div>
+  <div class="sub">กดเลือกปีที่ต้องการเปรียบเทียบ (เลือกได้หลายปี) · แยกกราฟชาย (โทนฟ้า) และหญิง (โทนชมพู) · ยิ่งเข้มยิ่งเป็นปีหลัง · ชี้ที่ช่วงอายุเพื่อดูจำนวนคนของทุกปีที่เลือก</div>
   <div id="chips" class="chips"></div>
-  <div class="ch tall" style="height:460px"><canvas id="grp"></canvas></div>
-  <div style="overflow:auto;margin-top:8px"><table class="t" id="grpTbl"></table></div></div>
- <div class="card" style="margin-top:14px"><h3>สัดส่วน 3 วัย</h3><div class="ch" style="height:120px"><canvas id="share3"></canvas></div></div>
+  <div class="grid g2" id="grpWrap">
+   <div id="grpMc"><h3 style="color:#2563eb;margin:4px 0">ชาย</h3><div class="ch tall" style="height:440px"><canvas id="grpM"></canvas></div></div>
+   <div id="grpFc"><h3 style="color:#db2777;margin:4px 0">หญิง</h3><div class="ch tall" style="height:440px"><canvas id="grpF"></canvas></div></div>
+  </div></div>
 </section>
 
 <section class="page" id="p2">
@@ -240,18 +241,19 @@ function setup(){
 }
 const hy1=()=>Math.min(S.y1,YMAX), hy0=()=>Math.min(S.y0,hy1()-1);
 function kpi(l,n,d){return `<div class="card kpi"><div class="l">${l}</div><div class="n">${n}</div><div class="d">${d||''}</div></div>`}
-const YCOL=['#94a3b8','#14b8a6','#3b82f6','#a855f7','#f59e0b','#ec4899','#22c55e','#ef4444','#0ea5e9','#84cc16'];
+const shade=(h,i,n)=>`hsl(${h} ${h===210?80:75}% ${n<2?48:80-i*(48/(n-1))}%)`;
 function grouped(codes){
   const ch=$('chips');
   ch.innerHTML=YEARS.map(y=>`<button data-y="${y}" class="${S.cmp.includes(y)?'on':''}">${y}</button>`).join('');
   ch.onclick=e=>{ const y=+e.target.dataset.y; if(!y) return; const i=S.cmp.indexOf(y); if(i>=0){ if(S.cmp.length>1) S.cmp.splice(i,1); } else { S.cmp.push(y); S.cmp.sort((a,b)=>a-b); } page1(); };
-  const ys=S.cmp.slice().sort((a,b)=>a-b), data=ys.map(y=>bandsOf(y,codes,S.sex));
-  mk('grp',{type:'bar',data:{labels:BAND,datasets:ys.map((y,i)=>({label:'พ.ศ. '+y,data:data[i],backgroundColor:YCOL[i%YCOL.length]}))},
-   options:{interaction:{mode:'index',intersect:false},scales:{x:{title:{display:true,text:'ช่วงอายุ (ปี)'}},y:{title:{display:true,text:'จำนวนประชากร (คน)'},ticks:{callback:v=>fmt(v/1000)+'k'}}},
-    plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.raw)} คน`}}}}});
-  $('grpTbl').innerHTML='<tr><th>ช่วงอายุ</th>'+ys.map(y=>`<th>พ.ศ. ${y}</th>`).join('')+(ys.length>1?`<th>เปลี่ยนแปลง (${ys[0]}→${ys[ys.length-1]})</th>`:'')+'</tr>'+
-   BAND.map((b,k)=>`<tr><td>${b}</td>`+data.map(d=>`<td>${fmt(d[k])}</td>`).join('')+(ys.length>1?`<td class="${data[data.length-1][k]<data[0][k]?'dn':'up'}">${fmt1((data[data.length-1][k]/data[0][k]-1)*100)}%</td>`:'')+'</tr>').join('')+
-   '<tr><th>รวม</th>'+data.map(d=>`<th>${fmt(sum(d,0,21))}</th>`).join('')+(ys.length>1?`<th>${fmt1((sum(data[data.length-1],0,21)/sum(data[0],0,21)-1)*100)}%</th>`:'')+'</tr>';
+  const ys=S.cmp.slice().sort((a,b)=>a-b);
+  $('grpMc').style.display=S.sex==='f'?'none':''; $('grpFc').style.display=S.sex==='m'?'none':'';
+  for(const [id,sx,h] of [['grpM','m',210],['grpF','f',330]]){
+    if((S.sex==='f'&&sx==='m')||(S.sex==='m'&&sx==='f')) continue;
+    mk(id,{type:'bar',data:{labels:BAND,datasets:ys.map((y,i)=>({label:'พ.ศ. '+y,data:bandsOf(y,codes,sx),backgroundColor:shade(h,i,ys.length)}))},
+     options:{interaction:{mode:'index',intersect:false},scales:{x:{title:{display:true,text:'ช่วงอายุ (ปี)'}},y:{title:{display:true,text:'จำนวนประชากร (คน)'},ticks:{callback:v=>fmt(v/1000)+'k'}}},
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.raw)} คน`}}}}});
+  }
 }
 function page1(){
   const codes=codesNow(), y1=hy1(), y0=hy0(), m=metrics(y1,codes), mp=metrics(y1-1,codes);
