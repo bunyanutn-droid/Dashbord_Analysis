@@ -213,5 +213,5 @@ print("national pop 2568:", int(sum(nat(68)[0]) + sum(nat(68)[1])))
 tpl = (ROOT / "template.html").read_text(encoding="utf-8")
 html = tpl.replace("/*DATA*/", (ROOT / "data" / "dashboard_data.json").read_text(encoding="utf-8")) \
           .replace("/*GEO*/", (ROOT / "data" / "geo_small.json").read_text(encoding="utf-8"))
-(ROOT / "dashboard.html").write_text(html, encoding="utf-8")
-print("wrote dashboard.html", len(html) // 1024, "KB")
+(ROOT / "index.html").write_text(html, encoding="utf-8")
+print("wrote index.html", len(html) // 1024, "KB")

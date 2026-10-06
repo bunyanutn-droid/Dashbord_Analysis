@@ -2,7 +2,7 @@
 
 Dashboard วิเคราะห์โครงสร้างประชากรและผลกระทบเชิงเศรษฐกิจของสังคมสูงวัยไทย (5 หน้า: Overview, Birth Trends, Regional, Socio-Economic, What-If Simulator)
 
-- เปิดดู: `dashboard.html` (ข้อมูลฝังในไฟล์แล้ว)
+- เปิดดู: `index.html` (ข้อมูลฝังในไฟล์แล้ว)
 - สร้างใหม่: `python build_data.py` (ต้องมี numpy; ดาวน์โหลดไฟล์ดิบด้วย `data/dl.sh`)
 
 ## แหล่งข้อมูล
